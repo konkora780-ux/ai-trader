@@ -35,7 +35,18 @@ def fetch_close_volume(codes, years):
     tickers = [f"{c}.T" for c in codes]
     raw = yf.download(tickers, period=f"{years}y", auto_adjust=True, progress=False,
                       group_by="column", threads=True)
-    close, volume = raw["Close"], raw["Volume"]
+    close, volume = raw["Close"].copy(), raw["Volume"].copy()
+    # 同時取得で取りこぼした銘柄は、1つずつ取り直す
+    missing = [t for t in tickers if t not in close or close[t].dropna().empty]
+    if missing:
+        print(f"{len(missing)} 銘柄を取り直します")
+        again = yf.download(missing, period=f"{years}y", auto_adjust=True, progress=False,
+                            group_by="column", threads=False)
+        for t in missing:
+            if len(missing) == 1:
+                close[t], volume[t] = again["Close"].squeeze(), again["Volume"].squeeze()
+            elif t in again["Close"]:
+                close[t], volume[t] = again["Close"][t], again["Volume"][t]
     for df in (close, volume):
         df.columns = [str(c).replace(".T", "") for c in df.columns]
     return close.dropna(how="all", axis=1), volume
