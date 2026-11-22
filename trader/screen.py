@@ -6,7 +6,7 @@
 import numpy as np
 import pandas as pd
 
-JPX_LIST = "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls"
+JPX_PAGE = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
 SIZE_CLASSES = ["TOPIX Core30", "TOPIX Large70", "TOPIX Mid400"]
 
 # JPXの一覧が取れなかったときの予備（主な大型株）
@@ -26,7 +26,15 @@ FALLBACK = {
 def universe():
     """{証券コード: 銘柄名} を返す。"""
     try:
-        df = pd.read_excel(JPX_LIST, dtype=str)
+        import re
+
+        import requests
+        page = requests.get(JPX_PAGE, timeout=30, headers={"User-Agent": "Mozilla/5.0"}).text
+        link = re.search(r'href="([^"]+data_j\.xls)"', page).group(1)
+        url = link if link.startswith("http") else "https://www.jpx.co.jp" + link
+        from io import BytesIO
+        xls = requests.get(url, timeout=60, headers={"User-Agent": "Mozilla/5.0"}).content
+        df = pd.read_excel(BytesIO(xls), dtype=str)
         df = df[df["規模区分"].isin(SIZE_CLASSES)]
         result = dict(zip(df["コード"].str.strip(), df["銘柄名"].str.strip()))
         if len(result) > 100:
