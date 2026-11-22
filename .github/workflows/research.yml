@@ -1,7 +1,9 @@
-# 銘柄の絞り込みとルール探し（GitHubの画面から手動で実行）
+# 銘柄の絞り込みとルール探し（毎週日曜20時に自動、手動でも実行可）
 name: research
 
 on:
+  schedule:
+    - cron: "0 11 * * 0"   # UTC 11:00 日曜 = 日本時間 20:00 日曜
   workflow_dispatch:
 
 permissions:
@@ -21,7 +23,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add docs/research.md docs/research_all.csv
+          git add docs/research.md docs/research_all.csv docs/watchlist.yaml
           git commit -m "ルール探しの結果を更新" || echo "変更なし"
           git pull --rebase
           git push

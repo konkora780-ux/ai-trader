@@ -75,6 +75,10 @@ def main():
             rows.append(res)
 
     df = pd.DataFrame(rows).sort_values("train_ret", ascending=False)
+    auto = [{"code": c, "name": names.get(c, c)} for c in picks["code"]]
+    if not sample:
+        (ROOT / "docs" / "watchlist.yaml").write_text(
+            yaml.safe_dump({"watchlist": auto}, allow_unicode=True, sort_keys=False), encoding="utf-8")
     write_report(df, picks, names, rcfg, sample)
 
 

@@ -4,7 +4,12 @@
 #  「#」から右はメモ（プログラムは読みません）。
 # =============================================
 
-# ■ 見たい銘柄（証券コード4桁と、自分用の名前）
+# ■ 銘柄の決め方
+#   auto   : 毎週日曜に市場全体から自動で選んだ銘柄（docs/watchlist.yaml）を使う
+#   manual : 下の watchlist に書いた銘柄を使う
+watchlist_source: auto
+
+# ■ 自分で決める銘柄（manual のとき、または自動の一覧がまだないときに使う）
 watchlist:
   - code: "7203"
     name: トヨタ自動車
@@ -22,8 +27,8 @@ watchlist:
 #   rsi          : 売られすぎ（数値が低い）で「買い」、買われすぎで「売り」
 #   bollinger    : 価格が普段の値動きの幅より大きく下がったら「買い」
 strategies:
-  - golden_cross
-  - rsi
+  # - golden_cross
+  - rsi            # 2026-11-22 ルール探しで一番成績が良かったもの
   # - bollinger
 
 # ■ ルールごとの細かい数字（気軽に変えてOK）
@@ -33,8 +38,8 @@ params:
     long: 25      # 長い平均の日数
   rsi:
     period: 14    # 何日分で計算するか
-    buy_below: 30 # この数値を下回ったら買いサイン
-    sell_above: 70 # この数値を上回ったら売りサイン
+    buy_below: 35 # この数値を下回ったら買いサイン
+    sell_above: 75 # この数値を上回ったら売りサイン
   bollinger:
     period: 20    # 平均を取る日数
     width: 2.0    # 幅（大きいほどサインが出にくい）

@@ -21,6 +21,10 @@ JST = timezone(timedelta(hours=9))
 def main():
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     stocks = cfg["watchlist"]
+    auto = ROOT / "docs" / "watchlist.yaml"
+    if cfg.get("watchlist_source") == "auto" and auto.exists():
+        stocks = yaml.safe_load(auto.read_text(encoding="utf-8"))["watchlist"]
+        print(f"自動で選んだ {len(stocks)} 銘柄を使います")
     years = cfg["backtest"]["years"]
     codes = [str(s["code"]) for s in stocks]
     prices = data.sample_prices(codes, years) if "--sample" in sys.argv else data.fetch_prices(codes, years)
