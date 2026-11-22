@@ -26,3 +26,23 @@ def sample_prices(codes, years, seed=0):
         steps = rng.normal(0.0003, 0.018, len(days))
         data[c] = (1000 + 500 * i) * np.exp(np.cumsum(steps))
     return pd.DataFrame(data, index=days).round(1)
+
+
+def fetch_close_volume(codes, years):
+    """多数の銘柄の終値と出来高をまとめて取る（列＝銘柄コード）。"""
+    import yfinance as yf
+
+    tickers = [f"{c}.T" for c in codes]
+    raw = yf.download(tickers, period=f"{years}y", auto_adjust=True, progress=False,
+                      group_by="column", threads=True)
+    close, volume = raw["Close"], raw["Volume"]
+    for df in (close, volume):
+        df.columns = [str(c).replace(".T", "") for c in df.columns]
+    return close.dropna(how="all", axis=1), volume
+
+
+def sample_close_volume(codes, years, seed=1):
+    close = sample_prices(codes, years - 1, seed)
+    rng = np.random.default_rng(seed)
+    volume = pd.DataFrame(rng.integers(1e5, 5e6, close.shape), index=close.index, columns=close.columns)
+    return close, volume

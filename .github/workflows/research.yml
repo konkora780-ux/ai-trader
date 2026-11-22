@@ -1,0 +1,27 @@
+# 銘柄の絞り込みとルール探し（GitHubの画面から手動で実行）
+name: research
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python research.py
+      - name: 結果を保存
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add docs/research.md docs/research_all.csv
+          git commit -m "ルール探しの結果を更新" || echo "変更なし"
+          git pull --rebase
+          git push

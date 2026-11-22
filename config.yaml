@@ -47,3 +47,17 @@ backtest:
 # ■ LINE通知
 notify:
   only_when_signal: true  # true = サインが出た日だけ通知 / false = 毎日通知
+
+# ■ 銘柄の絞り込みとルール探し（research.py で使う）
+research:
+  years: 4          # 何年分のデータを使うか
+  test_years: 1     # そのうち直近何年を「検証用」に取っておくか
+  budget: 300000    # 1銘柄あたりの予算（円）
+  cost_pct: 0.1     # 手数料・すべりの見込み（片道%）
+  screen:
+    min_turnover_oku: 10   # 1日の売買代金が何億円以上か（売買しやすさ）
+    min_vol: 20            # 値動きの大きさ（年率%）の下限：動かない株は除く
+    max_vol: 60            # 上限：荒すぎる株は除く
+    max_cost_100: 300000   # 100株の金額の上限（円）：少額で買えるか
+    trend_only: true       # 上昇トレンドの銘柄だけにするか
+    top_n: 20              # 候補を何銘柄まで絞るか
