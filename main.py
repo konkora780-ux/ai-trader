@@ -3,6 +3,7 @@
 使い方:
   python main.py           # 本物の株価で実行
   python main.py --sample  # 架空の株価で動作確認（ネット不要）
+  python main.py --always  # サインがなくてもLINEに送る（通知の試し用）
 """
 import sys
 from datetime import datetime, timedelta, timezone
@@ -52,7 +53,7 @@ def main():
     out.write_text(report.build(results, updated, years), encoding="utf-8")
     print(f"結果画面を作りました: {out}")
 
-    if alerts or not cfg["notify"]["only_when_signal"]:
+    if alerts or not cfg["notify"]["only_when_signal"] or "--always" in sys.argv:
         body = "\n".join(alerts) if alerts else "今日はサインがありません。"
         notify.send_line(f"📈 AIトレーダー {updated}\n{body}")
     else:
