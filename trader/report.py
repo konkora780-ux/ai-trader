@@ -40,6 +40,16 @@ def _pct(v):
     return "—" if v is None else f"{v:+.1f}%"
 
 
+def _ai(state):
+    log = state.get("ai_log", [])[-8:]
+    if not log:
+        return ""
+    rows = "".join(f"<tr><td>{a['date'][5:]}</td><td>{html.escape(a['name'])}</td>"
+                   f"<td>{'買う' if a.get('decision') == 'buy' else '見送り'}</td>"
+                   f"<td>{html.escape(str(a.get('reason', '')))}</td></tr>" for a in reversed(log))
+    return f"<table><tr><th>日付</th><th>AI判断</th><th>結論</th><th>理由</th></tr>{rows}</table>"
+
+
 def _paper(state):
     if not state or not state.get("equity"):
         return ""
@@ -66,6 +76,7 @@ def _paper(state):
             f"<dt>現金</dt><dd>{state['cash']:,.0f} 円</dd><dt>売買した回数・勝率</dt>"
             f"<dd>{len(state['trades'])}回・{rate}</dd><dt>次の営業日の注文予定</dt><dd>{pend}</dd></dl>"
             f"<table><tr><th>持っている銘柄</th><th>株数</th><th>買値</th><th>買った日</th></tr>{rows}</table>"
+            + _ai(state) +
             f"<table><tr><th>最近売った銘柄</th><th>売った日</th><th>損益</th><th>理由</th></tr>{trades}</table></div>")
 
 

@@ -4,20 +4,20 @@ import pandas as pd
 
 
 def fetch_prices(codes, years):
-    """証券コードのリストから、日ごとの（終値, 始値）の表を返す（列＝銘柄コード）。"""
+    """証券コードのリストから、日ごとの（終値, 始値, 出来高）の表を返す（列＝銘柄コード）。"""
     import yfinance as yf
 
     tickers = [f"{c}.T" for c in codes]  # 東証銘柄は末尾に .T をつける
     raw = yf.download(tickers, period=f"{years + 1}y", auto_adjust=True,
                       progress=False, group_by="column")
     out = []
-    for col in ("Close", "Open"):
+    for col in ("Close", "Open", "Volume"):
         df = raw[col]
         if isinstance(df, pd.Series):
             df = df.to_frame(tickers[0])
         df.columns = [str(c).replace(".T", "") for c in df.columns]
         out.append(df.dropna(how="all"))
-    return out[0], out[1].reindex(out[0].index)
+    return out[0], out[1].reindex(out[0].index), out[2].reindex(out[0].index)
 
 
 def sample_prices(codes, years, seed=0):
@@ -35,7 +35,9 @@ def sample_ohlc(codes, years, seed=0, days_back=0):
     close = sample_prices(codes, years, seed)
     if days_back:
         close = close.iloc[:-days_back]
-    return close, (close.shift(1) * 1.002).fillna(close)
+    rng = np.random.default_rng(seed)
+    volume = pd.DataFrame(rng.integers(1e5, 5e6, close.shape), index=close.index, columns=close.columns)
+    return close, (close.shift(1) * 1.002).fillna(close), volume
 
 
 def fetch_close_volume(codes, years):
