@@ -86,11 +86,11 @@ def main():
                                   trailing=opt.get("trailing", 0), size=size)
                 rets.append(bt["return_pct"]); dds.append(bt["max_dd_pct"])
                 trades.append(bt["trades"]); holds.append(bt["hold_pct"])
-            r, d = np.mean(rets), np.mean(dds)
+            r, d = np.median(rets), np.median(dds)  # 一部のおかしなデータに引きずられないよう中央値
             rows.append({"工夫": label, "期間": pname, "平均損益%": r, "平均の最大落ち込み%": d,
                          "効率（損益÷落ち込み）": r / abs(d) if d else np.nan,
                          "プラスで終えた銘柄%": np.mean([x > 0 for x in rets]) * 100,
-                         "売買回数/銘柄": np.mean(trades), "ずっと保有%": np.mean(holds), "銘柄数": len(rets)})
+                         "売買回数/銘柄": np.median(trades), "ずっと保有%": np.median(holds), "銘柄数": len(rets)})
     df = pd.DataFrame(rows)
     write(df, sample, p, sl)
 
@@ -101,12 +101,12 @@ def write(df, sample, p, sl):
     if sample:
         out += ["**※架空データでの動作確認です。数字に意味はありません。**", ""]
     out += [f"基本ルール：RSIが{p['buy_below']}を下回ったら買い・{p['sell_above']}を上回ったら売り・損切り{sl}%。"
-            "東証の大型・中型株すべてで1銘柄ずつ試した平均です。手数料など片道0.1%を差し引いています。", ""]
+            "東証の大型・中型株すべてで1銘柄ずつ試した結果の中央値（真ん中の値）です。手数料など片道0.1%を差し引いています。", ""]
     for pname in df["期間"].unique():
         sub = df[df["期間"] == pname]
         base = sub.iloc[0]
-        out += [f"## {pname}（ずっと保有した場合の平均 {base['ずっと保有%']:+.1f}%）", "",
-                "| 工夫 | 平均損益 | 基本との差 | 最大の落ち込み | 効率 | プラスで終えた銘柄 | 売買回数 |",
+        out += [f"## {pname}（ずっと保有した場合の中央値 {base['ずっと保有%']:+.1f}%）", "",
+                "| 工夫 | 損益 | 基本との差 | 最大の落ち込み | 効率 | プラスで終えた銘柄 | 売買回数 |",
                 "|---|---|---|---|---|---|---|"]
         for r in sub.itertuples(index=False):
             out.append(f"| {r[0]} | {r[2]:+.1f}% | {r[2] - base['平均損益%']:+.1f} | {r[3]:.1f}% | "
