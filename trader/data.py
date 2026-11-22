@@ -9,7 +9,7 @@ def fetch_prices(codes, years):
 
     tickers = [f"{c}.T" for c in codes]  # 東証銘柄は末尾に .T をつける
     raw = yf.download(tickers, period=f"{years + 1}y", auto_adjust=True,
-                      progress=False, group_by="column")
+                      progress=False, group_by="column", threads=False)
     out = []
     for col in ("Close", "Open", "Volume"):
         df = raw[col]
