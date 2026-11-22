@@ -41,6 +41,12 @@ def main():
                      else data.fetch_prices(codes, years))
     start = prices.index[-1] - timedelta(days=365 * years)
 
+    # 東証が休み（土日・祝日・年末年始）の日は、今日の値段が出ないので何もしない
+    today_jst = datetime.now(JST).date()
+    if not sample and "--always" not in sys.argv and prices.index[-1].date() != today_jst:
+        print(f"今日（{today_jst}）は東証の取引がないため、判定・仮想売買・通知を休みます。")
+        return
+
     results, alerts, combined = [], [], {}
     for key in cfg["strategies"]:
         title, func = STRATEGIES[key]
