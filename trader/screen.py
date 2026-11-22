@@ -30,7 +30,9 @@ def universe():
 
         import requests
         page = requests.get(JPX_PAGE, timeout=30, headers={"User-Agent": "Mozilla/5.0"}).text
-        link = re.search(r'href="([^"]+data_j\.xls)"', page).group(1)
+        links = re.findall(r'href=["\']([^"\']+\.xlsx?)["\']', page)
+        print("JPXページで見つかったExcel:", links[:5])
+        link = next((l for l in links if "data_j" in l), links[0])
         url = link if link.startswith("http") else "https://www.jpx.co.jp" + link
         from io import BytesIO
         xls = requests.get(url, timeout=60, headers={"User-Agent": "Mozilla/5.0"}).content
