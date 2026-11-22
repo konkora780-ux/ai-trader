@@ -21,7 +21,8 @@ grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
 .buy{background:var(--buybg);color:var(--buy)}.sell{background:var(--sellbg);color:var(--sell)}
 .none{background:var(--line);color:var(--sub)}svg{width:100%;height:48px;display:block;margin:6px 0}
 dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;font-size:.85rem}
-dt{color:var(--sub)}dd{margin:0;text-align:right}.note{color:var(--sub);font-size:.8rem;margin-top:24px}
+dt{color:var(--sub)}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.85rem}
+th,td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}th{color:var(--sub);font-weight:500}dd{margin:0;text-align:right}.note{color:var(--sub);font-size:.8rem;margin-top:24px}
 """
 
 
@@ -39,12 +40,41 @@ def _pct(v):
     return "—" if v is None else f"{v:+.1f}%"
 
 
-def build(rows_by_strategy, updated, years):
+def _paper(state):
+    if not state or not state.get("equity"):
+        return ""
+    last, cap = state["equity"][-1], state["capital"]
+    ret, bench = (last["value"] / cap - 1) * 100, (last["bench"] / cap - 1) * 100
+    hist = [e["value"] for e in state["equity"]]
+    rows = "".join(
+        f"<tr><td>{html.escape(p['name'])}</td><td>{p['shares']}株</td><td>{p['buy_price']:,.0f}円</td>"
+        f"<td>{p['buy_date']}</td></tr>" for p in state["positions"].values()) or \
+        "<tr><td colspan='4'>まだ持っている銘柄はありません</td></tr>"
+    trades = "".join(
+        f"<tr><td>{html.escape(t['name'])}</td><td>{t['sell_date']}</td><td>{t['pnl_pct']:+.1f}%</td>"
+        f"<td>{html.escape(t['reason'])}</td></tr>" for t in reversed(state["trades"][-10:])) or \
+        "<tr><td colspan='4'>まだ売った銘柄はありません</td></tr>"
+    pend = "、".join(f"{o['code']}を{'買い' if o['side'] == 'buy' else '売り'}" for o in state["pending"]) or "なし"
+    wins = sum(1 for t in state["trades"] if t["pnl_pct"] > 0)
+    rate = f"{wins / len(state['trades']) * 100:.0f}%" if state["trades"] else "—"
+    import pandas as pd
+    spark = _spark(pd.Series(hist)) if len(hist) > 1 else ""
+    return (f"<h2>仮想売買の成績（{state['start_date']}開始・本物のお金は使っていません）</h2>"
+            f"<div class='card'><div class='top'><div><div class='code'>評価額</div>"
+            f"<div class='price'>{last['value']:,} 円</div></div><span class='badge {'buy' if ret >= 0 else 'sell'}'>"
+            f"{ret:+.1f}%</span></div>{spark}<dl><dt>市場全体（TOPIX）をずっと保有</dt><dd>{bench:+.1f}%</dd>"
+            f"<dt>現金</dt><dd>{state['cash']:,.0f} 円</dd><dt>売買した回数・勝率</dt>"
+            f"<dd>{len(state['trades'])}回・{rate}</dd><dt>次の営業日の注文予定</dt><dd>{pend}</dd></dl>"
+            f"<table><tr><th>持っている銘柄</th><th>株数</th><th>買値</th><th>買った日</th></tr>{rows}</table>"
+            f"<table><tr><th>最近売った銘柄</th><th>売った日</th><th>損益</th><th>理由</th></tr>{trades}</table></div>")
+
+
+def build(rows_by_strategy, updated, years, state=None):
     parts = [f"<!doctype html><html lang='ja'><head><meta charset='utf-8'>"
              f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
              f"<title>AIトレーダー</title><style>{CSS}</style></head><body><main>"
              f"<h1>AIトレーダー 今日のサイン</h1><div class='meta'>更新：{updated}"
-             f"（直近の終値で判定）</div>"]
+             f"（直近の終値で判定）</div>", _paper(state)]
     for title, rows in rows_by_strategy:
         parts.append(f"<h2>{html.escape(title)}</h2><div class='grid'>")
         for r in rows:

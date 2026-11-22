@@ -49,6 +49,15 @@ backtest:
   years: 3        # 何年分さかのぼるか
   budget: 100000  # 1銘柄あたりに使う金額（円）。1株単位で計算します
 
+# ■ 仮想売買（本物のお金は使いません）
+#   サインどおりに売買したことにして、成績を docs/paper.json に記録します。
+#   最初からやり直したいときは docs/paper.json を消します。
+paper:
+  capital: 1000000    # 仮想資金（円）
+  max_positions: 5    # 同時に持つ銘柄数の上限（1銘柄あたり 資金÷この数 まで）
+  stop_loss: 10       # 買値から何%下がったら損切りするか（0 なら使わない）
+  take_profit: 0      # 何%上がったら利益確定するか（0 なら売りサインまで持つ）
+
 # ■ LINE通知
 notify:
   only_when_signal: true  # true = サインが出た日だけ通知 / false = 毎日通知
