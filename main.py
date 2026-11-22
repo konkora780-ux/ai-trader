@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from trader import backtest, data, notify, paper, report
+from trader import backtest, data, notify, paper, report, scoring
 from trader.strategies import STRATEGIES
 
 ROOT = Path(__file__).parent
@@ -71,6 +71,12 @@ def main():
             if today != 0:
                 alerts.append(f"{'🔴買い' if today == 1 else '🔵売り'} {names[code]}（{code}）"
                               f" {close.iloc[-1]:,.0f}円 [{title}]")
+            if today == 1 and paper.BENCH in prices:
+                m = prices[paper.BENCH].dropna()
+                pts, ok, ng = scoring.explain_today(close, volumes[code].reindex(close.index),
+                                                    m > m.rolling(75).mean())
+                alerts.append(f"　📊プロ目線の点数 {pts}/5　◎{'・'.join(ok) or 'なし'}"
+                              f"　△{'・'.join(ng) or 'なし'}")
         results.append((title, rows))
 
     # 仮想売買
