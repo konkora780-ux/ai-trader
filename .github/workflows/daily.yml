@@ -1,0 +1,30 @@
+# 平日の16:00（日本時間）に自動で分析し、LINE通知と結果画面の更新を行う
+name: daily-signal
+
+on:
+  schedule:
+    - cron: "0 7 * * 1-5"   # UTC 7:00 = 日本時間 16:00（月〜金）
+  workflow_dispatch:         # GitHubの画面から手動でも実行できる
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python main.py
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      - name: 結果画面を保存
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add docs/index.html
+          git commit -m "今日のサインを更新" || echo "変更なし"
+          git push
