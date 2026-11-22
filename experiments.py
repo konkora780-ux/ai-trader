@@ -30,14 +30,24 @@ VARIANTS = [
     ("＋値動きに合わせて買う量を調整", {"sizing": True}),
     ("＋地合い判定＋トレーリング12%", {"market": True, "trailing": 12}),
     ("＋地合い判定＋値動き調整", {"market": True, "sizing": True}),
+    ("＋買い点数2点以上", {"score": 2}),
+    ("＋買い点数3点以上", {"score": 3}),
+    ("＋買い点数4点以上", {"score": 4}),
 ]
 EXPLAIN = {
+    "＋買い点数": "次の5項目を1点ずつ数え、合計が基準以上のときだけ買う：上昇トレンド中（75日平均より上）／地合い良好／出来高急増（20日平均の1.5倍以上）／深い売られすぎ（RSI30未満）／急落ではない（20日で15%超の下落でない）",
     "＋地合い判定": "市場全体（TOPIX）が75日平均より下＝下げ相場の間は、新しく買わない",
     "＋出来高の確認": "買いサインの日の出来高が、普段（20日平均）の1.5倍以上のときだけ買う",
     "＋トレーリングストップ8%": "買った後の一番高い値段から8%下がったら売る（利益を守る）",
     "＋トレーリングストップ12%": "同じく12%下がったら売る（少しゆとりを持たせる）",
     "＋値動きに合わせて買う量を調整": "値動きが荒い銘柄・時期ほど少なく買う（年率25%を目安に、資金の3〜10割）",
 }
+
+
+def buy_score(c, v, market_ok):
+    """買いサインの質を0〜5点で採点する（trader/scoring.py と同じ考え方）。"""
+    from trader.scoring import score_series
+    return score_series(c, v, market_ok)
 
 
 def main():
@@ -74,6 +84,8 @@ def main():
                 if opt.get("volume"):
                     v = volume[code].reindex(c.index)
                     buy &= v > v.rolling(20).mean() * 1.5
+                if opt.get("score"):
+                    buy &= buy_score(c, volume[code].reindex(c.index), market_ok) >= opt["score"]
                 sig = sig.where((sig != 1) | buy, 0)
                 size = None
                 if opt.get("sizing"):

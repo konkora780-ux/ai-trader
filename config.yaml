@@ -58,15 +58,6 @@ paper:
   stop_loss: 10       # 買値から何%下がったら損切りするか（0 なら使わない）
   take_profit: 0      # 何%上がったら利益確定するか（0 なら売りサインまで持つ）
 
-# ■ AIによる買いの最終判断（Claude、有料）
-#   買いサインが出た銘柄を、AIがニュースや決算予定も確認して「買う／見送る」を決めます。
-#   GitHubのSecretに ANTHROPIC_API_KEY が無いときは、ルールどおりに買います。
-ai:
-  enabled: true
-  max_per_day: 5            # 1日に判断する銘柄数の上限
-  max_searches: 3           # 1銘柄あたりのニュース検索回数の上限
-  monthly_budget_yen: 2500  # 月の利用料の上限（目安）。超えたらその月はルールどおり
-
 # ■ LINE通知
 notify:
   only_when_signal: true  # true = サインが出た日だけ通知 / false = 毎日通知

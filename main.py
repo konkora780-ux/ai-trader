@@ -6,14 +6,13 @@
   python main.py --always  # サインがなくてもLINEに送る（通知の試し用）
   ※仮想売買の記録は docs/paper.json（--sample のときは docs/paper_sample.json）
 """
-import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
 
-from trader import ai_judge, backtest, data, notify, paper, report
+from trader import backtest, data, notify, paper, report
 from trader.strategies import STRATEGIES
 
 ROOT = Path(__file__).parent
@@ -41,19 +40,6 @@ def main():
     prices, opens, volumes = (data.sample_ohlc(codes, years, days_back=back) if sample
                      else data.fetch_prices(codes, years))
     start = prices.index[-1] - timedelta(days=365 * years)
-
-    # AI判断の試し：環境変数 AI_TEST_CODE の銘柄を1つだけ判断してLINEに送る（売買はしない）
-    test_code = os.environ.get("AI_TEST_CODE", "").strip()
-    if test_code:
-        if test_code not in prices:
-            prices, opens, volumes = data.fetch_prices(codes + [test_code], years)
-        res = ai_judge.judge(ROOT, test_code, names.get(test_code, test_code), prices[test_code],
-                             volumes[test_code], prices[paper.BENCH], cfg["ai"])
-        msg = ("AIの鍵が未設定か、上限に達しています。" if res is None else
-               f"{'買う' if res['decision'] == 'buy' else '見送り'}（自信{res.get('confidence')}/5）"
-               f"{res.get('reason')}\n費用の目安：約{res['cost_yen']:.0f}円")
-        notify.send_line(f"🧪AI判断の試し {names.get(test_code, test_code)}（{test_code}）\n{msg}")
-        return
 
     # 東証が休み（土日・祝日・年末年始）の日は、今日の値段が出ないので何もしない
     today_jst = datetime.now(JST).date()
@@ -86,25 +72,6 @@ def main():
                 alerts.append(f"{'🔴買い' if today == 1 else '🔵売り'} {names[code]}（{code}）"
                               f" {close.iloc[-1]:,.0f}円 [{title}]")
         results.append((title, rows))
-
-    # AIによる買いの最終判断（鍵がなければルールどおり）
-    acfg = cfg.get("ai", {})
-    if acfg.get("enabled"):
-        held_now = paper.load(paper_path, 0, "", 1)["positions"] if paper_path.exists() else {}
-        slots = cfg["paper"]["max_positions"] - len(held_now)
-        buys = [c for c, v in combined.items() if v == 1 and c not in held_now][:max(slots, 0)]
-        for code in buys[:acfg["max_per_day"]]:
-            res = ai_judge.judge(ROOT, code, names.get(code, code), prices[code],
-                                 volumes[code], prices[paper.BENCH], acfg)
-            if res is None:
-                continue
-            ok = res.get("decision") == "buy"
-            if not ok:
-                combined[code] = 0
-            alerts.append(f"🤖AI判断 {names.get(code, code)}：{'買う' if ok else '見送り'}"
-                          f"（自信{res.get('confidence', '-')}/5）{res.get('reason', '')}")
-            ai_log.append({"date": prices.index[-1].strftime("%Y-%m-%d"), "code": code,
-                           "name": names.get(code, code), **res})
 
     # 仮想売買
     day = prices.index[-1].strftime("%Y-%m-%d")
