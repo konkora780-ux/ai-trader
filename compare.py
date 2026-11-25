@@ -58,6 +58,9 @@ RULES = [
     ("RSI 40/70", "買う基準を40、売る基準を70に（早めに利益確定）", lambda c: rsi(c, 14, 40, 70)),
     ("押し目買い（RSI 50）", "上昇トレンド中（75日平均より上）にRSIが50を下回ったら買い、75を上回ったら売り",
      lambda c: pullback(c, 50)),
+    ("押し目買い（RSI 45）", "上昇トレンド中にRSIが45を下回ったら買い、75を上回ったら売り",
+     lambda c: pullback(c, 45)),
+    ("押し目買い（RSI 50）・損切り7%", "押し目買い（RSI 50）の損切りを7%に早める", (lambda c: pullback(c, 50), 0.07)),
     ("ゴールデンクロス 5/25", "5日平均が25日平均を上に抜けたら買い、下に抜けたら売り",
      lambda c: golden_cross(c, 5, 25)),
     ("高値更新（60日）", "過去60日の最高値を超えたら買い、25日平均を割ったら売り", lambda c: breakout(c, 60)),
@@ -89,6 +92,15 @@ def fetch(codes, years):
         df.columns = [str(c).replace(".T", "") for c in df.columns]
     close = out["Close"].dropna(how="all", axis=1)
     return close, out["Open"].reindex(columns=close.columns), out["Volume"].reindex(columns=close.columns)
+
+
+def clean(df):
+    """1日だけ値段が大きく飛んで翌日に戻る「データの誤り」を取り除く。"""
+    r = df.pct_change(fill_method=None)
+    back = df.shift(-1) / df - 1
+    bad = (r.abs() > 0.3) & (back.abs() > 0.25) & (np.sign(r) != np.sign(back))
+    print(f"データの誤りとして除いた値: {int(bad.sum().sum())} 個")
+    return df.mask(bad).ffill(limit=1)
 
 
 def sample(codes, years):
@@ -196,6 +208,7 @@ def main():
     close, open_, volume = (sample if is_sample else fetch)(list(names) + [BENCH], YEARS + 2)
     if BENCH not in close:
         raise SystemExit("市場全体の値段（1306）が取れませんでした")
+    close, open_ = clean(close), clean(open_)
     bench = close.pop(BENCH).ffill()
     open_, volume = open_.drop(columns=[BENCH], errors="ignore"), volume.drop(columns=[BENCH], errors="ignore")
     end = close.index[-1]
@@ -213,8 +226,11 @@ def main():
         if func == "bench":
             eq, trades = bench_eq, []
         else:
+            rule_stop = stop
+            if isinstance(func, tuple):
+                func, rule_stop = func
             sig = None if func is None else {c: func(close[c].dropna()) for c in close.columns}
-            eq, trades = simulate(close, open_, sig, picks, days, capital, slots, stop)
+            eq, trades = simulate(close, open_, sig, picks, days, capital, slots, rule_stop)
         s = stats(eq, trades, YEARS)
         s.update({"rule": label, "desc": desc})
         rows.append(s)
