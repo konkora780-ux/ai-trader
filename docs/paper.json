@@ -3,7 +3,13 @@
  "capital": 1000000,
  "cash": 1000000,
  "positions": {},
- "pending": [],
+ "pending": [
+  {
+   "side": "buy",
+   "code": "2222",
+   "reason": "買いサイン"
+  }
+ ],
  "trades": [],
  "equity": [
   {
@@ -15,9 +21,14 @@
    "date": "2026-11-25",
    "value": 1000000,
    "bench": 1022009
+  },
+  {
+   "date": "2026-11-24",
+   "value": 1000000,
+   "bench": 1025116
   }
  ],
- "last_date": "2026-11-25",
+ "last_date": "2026-11-24",
  "bench_units": 2589.3318705125453,
  "ai_log": []
 }
