@@ -41,10 +41,13 @@ def main():
                      else data.fetch_prices(codes, years))
     start = prices.index[-1] - timedelta(days=365 * years)
 
-    # 東証が休み（土日・祝日・年末年始）の日は、今日の値段が出ないので何もしない
-    today_jst = datetime.now(JST).date()
-    if not sample and "--always" not in sys.argv and prices.index[-1].date() != today_jst:
-        print(f"今日（{today_jst}）は東証の取引がないため、判定・仮想売買・通知を休みます。")
+    # 新しい取引日の値段がまだ無い（休場日・すでに処理済み）なら何もしない。
+    # 「今日の日付」で比べると、GitHubの実行が遅れて日付をまたいだときに平日まで休んでしまうため、
+    # 仮想売買の記録（最後に処理した日）と比べる。
+    latest = prices.index[-1].strftime("%Y-%m-%d")
+    done = paper.load(paper_path, 0, "", 1).get("last_date") if paper_path.exists() else None
+    if not sample and "--always" not in sys.argv and latest == done:
+        print(f"最新の取引日（{latest}）はすでに処理済み、または東証が休みのため、判定・仮想売買・通知を休みます。")
         return
 
     results, alerts, combined, ai_log = [], [], {}, []
