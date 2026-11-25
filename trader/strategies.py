@@ -44,8 +44,18 @@ def bollinger(close, period=20, width=2.0):
     return _signal(_cross_down(close, lower), _cross_up(close, mid))
 
 
+def pullback(close, trend=75, period=14, buy_below=50, sell_above=75):
+    """押し目買い：上昇トレンド（trend日平均より上）の銘柄が一時的に下がり、RSIが buy_below を下回ったら買い。
+    RSIが sell_above を上回ったら売り。"""
+    up = close > close.rolling(trend).mean()
+    r = rsi_values(close, period)
+    low, high = pd.Series(buy_below, index=r.index), pd.Series(sell_above, index=r.index)
+    return _signal(_cross_down(r, low) & up, _cross_up(r, high))
+
+
 STRATEGIES = {
     "golden_cross": ("ゴールデンクロス", golden_cross),
     "rsi": ("RSI（売られすぎ・買われすぎ）", rsi),
     "bollinger": ("ボリンジャーバンド", bollinger),
+    "pullback": ("押し目買い（上昇中の一時的な下げで買う）", pullback),
 }
