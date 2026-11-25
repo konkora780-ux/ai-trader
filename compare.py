@@ -210,6 +210,8 @@ def main():
         raise SystemExit("市場全体の値段（1306）が取れませんでした")
     close, open_ = clean(close), clean(open_)
     bench = close.pop(BENCH).ffill()
+    med = bench.rolling(5, center=True, min_periods=1).median()
+    bench = bench.mask((bench / med - 1).abs() > 0.3).ffill()  # 市場全体の値段の誤りも除く
     open_, volume = open_.drop(columns=[BENCH], errors="ignore"), volume.drop(columns=[BENCH], errors="ignore")
     end = close.index[-1]
     days = close.index[close.index >= end - timedelta(days=365 * YEARS)]
