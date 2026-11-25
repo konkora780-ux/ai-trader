@@ -26,10 +26,12 @@ watchlist:
 #   golden_cross : 短い期間の平均が長い期間の平均を上に抜けたら「買い」
 #   rsi          : 売られすぎ（数値が低い）で「買い」、買われすぎで「売り」
 #   bollinger    : 価格が普段の値動きの幅より大きく下がったら「買い」
+#   pullback     : 上昇中の銘柄が一時的に下がったところ（押し目）で「買い」
 strategies:
   # - golden_cross
-  - rsi            # 2026-11-22 ルール探しで一番成績が良かったもの
+  # - rsi            # 2026-11-22〜11-25 に使っていたルール
   # - bollinger
+  - pullback       # 2026-11-25 過去4年の比較（docs/compare.md）で採用
 
 # ■ ルールごとの細かい数字（気軽に変えてOK）
 params:
@@ -43,6 +45,11 @@ params:
   bollinger:
     period: 20    # 平均を取る日数
     width: 2.0    # 幅（大きいほどサインが出にくい）
+  pullback:
+    trend: 75       # 何日平均より上なら「上昇中」とみなすか
+    period: 14      # RSIを何日分で計算するか
+    buy_below: 50   # 上昇中にRSIがこれを下回ったら買いサイン
+    sell_above: 75  # RSIがこれを上回ったら売りサイン
 
 # ■ 過去データでの試運転（バックテスト）
 backtest:
