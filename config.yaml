@@ -67,7 +67,7 @@ paper:
 
 # ■ LINE通知
 notify:
-  only_when_signal: true  # true = サインが出た日だけ通知 / false = 毎日通知
+  only_when_signal: false  # true = サインが出た日だけ通知 / false = 毎日通知
 
 # ■ 銘柄の絞り込みとルール探し（research.py で使う）
 research:
