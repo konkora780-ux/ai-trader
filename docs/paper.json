@@ -1,15 +1,16 @@
 {
  "start_date": "2026-11-20",
  "capital": 1000000,
- "cash": 1000000,
- "positions": {},
- "pending": [
-  {
-   "side": "buy",
-   "code": "2222",
-   "reason": "買いサイン"
+ "cash": 800036.236,
+ "positions": {
+  "2222": {
+   "name": "寿スピリッツ",
+   "shares": 72,
+   "buy_price": 2774.5,
+   "buy_date": "2026-11-25"
   }
- ],
+ },
+ "pending": [],
  "trades": [],
  "equity": [
   {
@@ -26,9 +27,14 @@
    "date": "2026-11-24",
    "value": 1000000,
    "bench": 1025116
+  },
+  {
+   "date": "2026-11-25",
+   "value": 1003112,
+   "bench": 1022009
   }
  ],
- "last_date": "2026-11-24",
+ "last_date": "2026-11-25",
  "bench_units": 2589.3318705125453,
  "ai_log": []
 }
